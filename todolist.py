@@ -1,41 +1,77 @@
 from cmu_graphics import *
 
 def onAppStart(app):
+    app.width = 1400
+    app.height = 800
+    noteVars(app)
+def noteVars(app):
     app.toDoList = []
+    app.i = len(app.toDoList)
+    app.note = ""
+    app.noteFill = {0:(None, False)}
+    app.x, app.y = app.width/4, app.height/4
+    app.dx, app.dy = app.width/2, app.height/2
 
-
-
-def redrawAll(app):
-    drawPolygon(app.width/4,0, app.width, 0, app.width, app.height, app.width/4, app.height, fill = 'grey')
-    drawPolygon(app.width/16, app.height/16, app.width/(16/3), app.height/16, app.width/(16/3), app.height/(16/3), app.width/16, app.height/(16/3)
-                , fill = 'lightGreen')
-    for i in range(len(app.toDoList)):
-        drawLabel(app.toDoList[i], app.width/2, i * 30, size = 16)
-
-
+    app.boxDim = 20
+    app.bx, app.by = app.x + 20, app.y + app.dy/6
+    app.listDim = [(app.bx, app.by, app.bx + app.boxDim,
+                    app.by + app.boxDim)]
     
 
-def distance(x0, y0, x1, y1):
+def drawNote(app):
+    drawRect(app.x, app.y, app.dx, app.dy, fill = "cornSilk",
+             border = "gray")
+    
+    drawLabel("To-Do List", app.x+app.dx/2, app.y + 20, size = 18)
+    drawLabel("Start typing to add to list!", app.x+app.dx/2, app.y + 40)
+
+    #drawing the blank box
+    drawRect(app.bx, app.by + (50*app.i), app.boxDim, app.boxDim, fill = app.noteFill[app.i][0], border = "black")
+    drawLabel(app.note, app.bx+app.boxDim+10,  app.by + (50*app.i) + app.boxDim/2, align = "left")
+
+
+    for i in range(len(app.toDoList)):
+        drawRect(app.bx, app.by + (50*i), app.boxDim, app.boxDim,
+                fill = app.noteFill[i][0], border = "black")
+        drawLabel(app.toDoList[i], app.bx+app.boxDim+10,  app.by + (50*i) + app.boxDim/2, align = "left")
+
+def redrawAll(app):
+    drawNote(app)
+
+def onStep(app):
     pass
+
+def distance(x0, y0, x1, y1):
+    return ((x0-x1)**2+(y0-y1)**2)**0.5
     
 
 def onMousePress(app, mouseX, mouseY):
-    if clickedAddButton(app, mouseX, mouseY):
-        task = input('Enter a task:')
-        app.toDoList.append(task)
+    for i in range(len(app.listDim)):
+        x0, y0, x1, y1 = app.listDim[i]
+        if x0 <= mouseX <= x1 and y0 <= mouseY <= y1:
+            app.noteFill[i] = ("lightGreen", True)
 
-
-
-def clickedAddButton(app,mouseX,mouseY):
-    if app.width/16 <= mouseX and mouseX <= app.width/(16/3):
-        if app.height/16 <= mouseY and mouseY <= app.height/(16/3):
-            return True
-    return False
-
-
-    
-    
-    
+def onMouseMove(app, mouseX, mouseY):
+    for i in range(len(app.listDim)):
+        x0, y0, x1, y1 = app.listDim[i]
+        if x0 <= mouseX <= x1 and y0 <= mouseY <= y1:
+            app.noteFill[i] = ("lightGreen", False)
+        else:
+            app.noteFill[i] = (None, False)
+def onKeyPress(app, key):
+    if len(key) == 1:
+        app.note += key
+    elif key == "space":
+        app.note += " "
+    elif key == "backspace":
+        app.note = app.note[:-1]
+    elif key == "enter":
+        app.toDoList.append(app.note)
+        app.note = ""
+        app.i = len(app.toDoList)
+        app.listDim.append((app.bx, app.by + (50*app.i), app.bx + app.boxDim,
+                            app.by + (50*app.i) + app.boxDim))
+        app.noteFill[app.i] = None
 
 def main():
     runApp()
